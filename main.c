@@ -100,8 +100,14 @@ void thresholding(unsigned char *data, int height, int width) {
                 unsigned char up = *(data + j + (i + 1)* width);
                 unsigned char right = *(data + j + 1 + i * width);
                 unsigned char cross = *(data + j + 1 + (i + 1) * width);
-                if (!(up >= sourcePixel || right >= sourcePixel || cross >= sourcePixel)){
-                    *(data + j + i * width) = 0;
+                if (up >= sourcePixel) {
+                    *(data + j + i * width) += 30;
+                }
+                if (right >= sourcePixel) {
+                    *(data + j + i * width) += 30;
+                }
+                if (cross >= sourcePixel) {
+                    *(data + j + i * width) += 30;
                 }
             }
         }
