@@ -8,7 +8,7 @@ edge: main.o canny.o
 main.o: main.c
 	cc ${CFLAGS} -g -c $^
 
-canny.o: canny.S
+canny.o: canny.s
 	nasm -f elf64 $^
 
 clear:
