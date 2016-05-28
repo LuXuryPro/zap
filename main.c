@@ -54,7 +54,7 @@ typedef struct {
 
 
 
-void canny(unsigned char *src, unsigned char *dst, int i);
+void canny(unsigned char *src, unsigned char *dst, int height, int width);
 
 
 
@@ -88,27 +88,7 @@ void * back_colors(unsigned char *data, int height, int width, int padding) {
 
 void *roberts_cross(unsigned char *data, int height, int width) {
     unsigned char *ret_data = malloc((size_t) (width * height));
-    unsigned char * direction_data = malloc((size_t) (width * height));
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j+=16) {
-            unsigned char sourcePixel;
-            sourcePixel = *(data + j + i * width);
-            /*
-            tmp1 = input_image(x, y) – input_image(x+1, y+1)
-            tmp2 = input_image(x+1, y) – input_image(x, y+1)
-            output_image(x, y) = absolute_value(tmp1) + absolute_value(tmp2)
-             */
-            if (!(i == height - 1 || j == width - 1)) {
-                unsigned char dstPixel = 0;
-                canny((data + j + i * width), (ret_data + j + i * width), width);
-            }
-            else
-            {
-                *(ret_data + j + i * width) = 0;
-            }
-
-        }
-    }
+    canny(data, ret_data, height, width);
     return ret_data;
 }
 
@@ -118,9 +98,11 @@ void thresholding(unsigned char *data, int height, int width) {
         for (int j = 0; j < width; j++) {
             unsigned char sourcePixel;
             sourcePixel = *(data + j + i * width);
-            if (sourcePixel < 0){
+            if (sourcePixel < 30){
                 *(data + j + i * width) = 0;
             }
+            else if (sourcePixel > 200)
+                *(data + j + i * width) = 255;
         }
     }
 }
@@ -154,7 +136,7 @@ int main(int argc, char **argv) {
     dst.padding = img.padding;
     void *reducedImage = reduce_colors(&img);
     void *crossed = roberts_cross(reducedImage, img.height, img.width);
-    thresholding(crossed, img.height, img.width);
+    //thresholding(crossed, img.height, img.width);
     dst.data = back_colors(crossed, img.height, img.width, padding);
 
 
