@@ -51,21 +51,30 @@ typedef struct {
 } Image;
 
 
+
+
+
+void canny(unsigned char *src, unsigned char *dst, int i);
+
+
+
+
+
 void *reduce_colors(Image *source) {
-    unsigned char *data = malloc((size_t) (source->height * source->width));
+    char *data = malloc((size_t) (source->height * source->width));
     for (int i = 0; i < source->height; i++) {
         for (int j = 0; j < source->padding / 3; j++) {
             Pixel sourcePixel = *(source->data + j + i * source->padding / 3);
-            data[i * source->width + j] = (unsigned char) (
+            data[i * source->width + j] = ((char) (
                     (float) sourcePixel.r * 0.3 + (float) sourcePixel.g * 0.59 +
-                    (float) sourcePixel.b * 0.11);
+                    (float) sourcePixel.b * 0.11) )^ 0x80;
         }
     }
     return data;
 }
 
 void * back_colors(unsigned char *data, int height, int width, int padding) {
-    unsigned char *ret_data = malloc((size_t) (height * padding));
+    char *ret_data = malloc((size_t) (height * padding));
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             unsigned char val = *(data + j + i * width);
@@ -81,35 +90,35 @@ void *roberts_cross(unsigned char *data, int height, int width) {
     unsigned char *ret_data = malloc((size_t) (width * height));
     unsigned char * direction_data = malloc((size_t) (width * height));
     for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
+        for (int j = 0; j < width; j+=16) {
             unsigned char sourcePixel;
             sourcePixel = *(data + j + i * width);
-            unsigned char dstPixel = 0;
             /*
             tmp1 = input_image(x, y) – input_image(x+1, y+1)
             tmp2 = input_image(x+1, y) – input_image(x, y+1)
             output_image(x, y) = absolute_value(tmp1) + absolute_value(tmp2)
              */
             if (!(i == height - 1 || j == width - 1)) {
-                int tmp1 = sourcePixel - *(data + j + 1 + (i + 1) * width);
-                int tmp2 = *(data + j + (i+1)* width) - *(data + j + 1 + i * width);
-                dstPixel = (unsigned char) sqrt((double)(tmp1*tmp1 + tmp2*tmp2));
-                double at = atan2((double)tmp2,(double)tmp1);
-                dstPixel = (unsigned char) ((255 * at) / (2 * M_PI));
+                unsigned char dstPixel = 0;
+                canny((data + j + i * width), (ret_data + j + i * width), width);
             }
-            *(ret_data + j + i * width) = dstPixel;
+            else
+            {
+                *(ret_data + j + i * width) = 0;
+            }
 
         }
     }
     return ret_data;
 }
 
+
 void thresholding(unsigned char *data, int height, int width) {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             unsigned char sourcePixel;
             sourcePixel = *(data + j + i * width);
-            if (sourcePixel < 20){
+            if (sourcePixel < 0){
                 *(data + j + i * width) = 0;
             }
         }
