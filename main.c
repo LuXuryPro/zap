@@ -85,7 +85,7 @@ void *roberts_cross(unsigned char *data, int height, int width) {
     return ret_data;
 }
 
-
+/*
 void thresholding(unsigned char *data, int height, int width) {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -113,6 +113,7 @@ void thresholding(unsigned char *data, int height, int width) {
         }
     }
 }
+*/
 
 void * blur(char * data, int height, int width)
 {
