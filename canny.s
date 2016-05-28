@@ -55,6 +55,9 @@ canny:
     pop rbp
     ret
 
+;source = rdi
+;heigth = rsi
+;width = rdx
 thresholding:
     push RBP
     push rbx
@@ -64,15 +67,16 @@ thresholding:
     push R15
     xor R12, R12; i = 0
     .for_i_in_rows:
-        cmp R12, rdx ; i < heigth
+        cmp R12, rsi; i < heigth
         jnb .exit
 
         xor R13, R13; j = 0
         .for_j_in_columns:
-            cmp R13, rcx; j < width
+            cmp R13, rdx; j < width
             jnb .exit_inner_loop
 
             MOVDQU xmm1, [rdi]; current pixel
+            MOVDQU xmm0, xmm1; current pixel
 
 
             ; ###################################
@@ -98,7 +102,7 @@ thresholding:
             ; set all values gt 150 to 255 (max val)
             ; prepare vector filled with 150
             xor rax, rax
-            mov rax, 80
+            mov rax, 60
             MOVQ xmm2, rax
             mov rax, 0
             PXOR xmm3, xmm3
@@ -109,6 +113,44 @@ thresholding:
             PCMPGTB xmm4, xmm2
 
             POR xmm1, xmm4
+
+            %if 0
+            MOVDQU xmm7, xmm1 ;save
+
+            MOVDQU xmm2, [rdi+rcx+ 1]; x+1 y+1
+
+            PCMPGTB xmm2, xmm1
+            xor rax, rax
+            mov rax, 10
+            MOVQ xmm5, rax
+            PXOR xmm6, xmm6
+            PSHUFB xmm5, xmm6
+
+            PAND xmm5, xmm2
+            PADDSB xmm7, xmm5
+
+            MOVDQU xmm3, [rdi+rcx]; x+1 y
+            PCMPGTB xmm3, xmm1
+            xor rax, rax
+            mov rax, 10
+            MOVQ xmm5, rax
+            PXOR xmm6, xmm6
+            PSHUFB xmm5, xmm6
+
+            PAND xmm5, xmm3
+            PADDSB xmm7, xmm5
+
+            MOVDQU xmm4, [rdi+1]; x y+1
+            PCMPGTB xmm4, xmm1
+            xor rax, rax
+            mov rax, 10
+            MOVQ xmm5, rax
+            PXOR xmm6, xmm6
+            PSHUFB xmm5, xmm6
+
+            PAND xmm5, xmm4
+            PADDSB xmm7, xmm5
+            %endif
 
             ; save 16 pixels
             MOVDQU [rdi], xmm1
