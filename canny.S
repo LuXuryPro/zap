@@ -1,9 +1,6 @@
     section .text
     global canny
 
-extern	printf
-fmt:    db "i=%d j=%d", 10, 0
-
 ;source = rdi
 ;dest = rsi
 ;heigth = rdx
@@ -25,9 +22,8 @@ canny:
             cmp R13, rcx; j < width
             jnb exit_inner_loop
 
-            ; calculate current pixel address
             MOVDQU xmm1, [rdi]; current pixel
-            MOVDQU xmm2, [rdi+rcx+ 1]; current pixel
+            MOVDQU xmm2, [rdi+rcx+ 1]; x+1 y+1
 
             PSUBSB xmm1, xmm2
             PABSB xmm1, xmm1

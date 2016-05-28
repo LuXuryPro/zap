@@ -51,14 +51,7 @@ typedef struct {
 } Image;
 
 
-
-
-
 void canny(unsigned char *src, unsigned char *dst, int height, int width);
-
-
-
-
 
 void *reduce_colors(Image *source) {
     char *data = malloc((size_t) (source->height * source->width));
@@ -98,13 +91,36 @@ void thresholding(unsigned char *data, int height, int width) {
         for (int j = 0; j < width; j++) {
             unsigned char sourcePixel;
             sourcePixel = *(data + j + i * width);
-            if (sourcePixel < 30){
+            if (sourcePixel < 20){
                 *(data + j + i * width) = 0;
             }
-            else if (sourcePixel > 200)
+            else if (sourcePixel > 150)
                 *(data + j + i * width) = 255;
+            else {
+                unsigned char up = *(data + j + (i + 1)* width);
+                unsigned char right = *(data + j + 1 + i * width);
+                unsigned char cross = *(data + j + 1 + (i + 1) * width);
+                if (!(up >= sourcePixel || right >= sourcePixel || cross >= sourcePixel)){
+                    *(data + j + i * width) = 0;
+                }
+            }
         }
     }
+}
+
+void * blur(char * data, int height, int width)
+{
+    char *ret_data = malloc((size_t) (width * height));
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            int sourcePixel = *(data + j + i * width);
+            int up = *(data + j + (i + 1)* width);
+            int right = *(data + j + 1 + i * width);
+            int cross = *(data + j + 1 + (i + 1) * width);
+            *(ret_data + j + i * width) = (char)((sourcePixel + up + right + cross)/4);
+        }
+    }
+    return ret_data;
 }
 
 int main(int argc, char **argv) {
@@ -135,8 +151,9 @@ int main(int argc, char **argv) {
     dst.width = img.width;
     dst.padding = img.padding;
     void *reducedImage = reduce_colors(&img);
+    reducedImage = blur(reducedImage, img.height, img.width);
     void *crossed = roberts_cross(reducedImage, img.height, img.width);
-    //thresholding(crossed, img.height, img.width);
+    thresholding(crossed, img.height, img.width);
     dst.data = back_colors(crossed, img.height, img.width, padding);
 
 
