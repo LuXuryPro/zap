@@ -44,6 +44,9 @@ canny:
             add rsi, 16
             jmp .for_j_in_columns
         .exit_inner_loop:
+        sub R13, rcx
+        sub rdi, R13
+        sub rsi, R13
         inc R12
         jmp .for_i_in_rows
 .exit:
@@ -85,7 +88,7 @@ thresholding:
             ;
             ; prepare vector filled with BYTE 20
             xor rax, rax
-            mov rax, 10
+            mov rax, 40
             MOVQ xmm2, rax
             mov rax, 0
             PXOR xmm3, xmm3
@@ -102,7 +105,7 @@ thresholding:
             ; set all values gt 150 to 255 (max val)
             ; prepare vector filled with 150
             xor rax, rax
-            mov rax, 60
+            mov rax, 50
             MOVQ xmm2, rax
             mov rax, 0
             PXOR xmm3, xmm3
@@ -159,6 +162,9 @@ thresholding:
             add rdi, 16
             jmp .for_j_in_columns
         .exit_inner_loop:
+        sub R13, rcx
+        sub rdi, R13
+        sub rsi, R13
         inc R12
         jmp .for_i_in_rows
 .exit:
