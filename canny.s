@@ -61,6 +61,8 @@ canny:
 ;source = rdi
 ;heigth = rsi
 ;width = rdx
+;lower = rcx
+;upper = r8
 thresholding:
     push RBP
     push rbx
@@ -79,7 +81,6 @@ thresholding:
             jnb .exit_inner_loop
 
             MOVDQU xmm1, [rdi]; current pixel
-            MOVDQU xmm0, xmm1; current pixel
 
 
             ; ###################################
@@ -88,16 +89,17 @@ thresholding:
             ;
             ; prepare vector filled with BYTE 20
             xor rax, rax
-            mov rax, 40
+            mov rax, rcx
             MOVQ xmm2, rax
             mov rax, 0
             PXOR xmm3, xmm3
             PSHUFB xmm2, xmm3
 
-            MOVDQU xmm4, xmm1 ; save
+            MOVDQA xmm4, xmm1 ; save
 
             PCMPGTB xmm4, xmm2 ; see what values of xmm1 are less than 20
             ; values less than 20 are marked by 0 in xmm2
+            MOVDQA xmm0, xmm4; save zero mask
 
             PAND xmm1, xmm4 ; zero out values less than 20 in xmm1
 
@@ -105,22 +107,24 @@ thresholding:
             ; set all values gt 150 to 255 (max val)
             ; prepare vector filled with 150
             xor rax, rax
-            mov rax, 50
+            mov rax, r8
             MOVQ xmm2, rax
             mov rax, 0
             PXOR xmm3, xmm3
             PSHUFB xmm2, xmm3
 
-            MOVDQU xmm4, xmm1 ; save
+            MOVDQA xmm4, xmm1 ; save
 
             PCMPGTB xmm4, xmm2
 
             POR xmm1, xmm4
+            PANDN xmm4, xmm0
+            MOVDQA xmm0, xmm4
 
-            %if 0
+            ;%if 0
             MOVDQU xmm7, xmm1 ;save
 
-            MOVDQU xmm2, [rdi+rcx+ 1]; x+1 y+1
+            MOVDQU xmm2, [rdi+rdx+ 1]; x+1 y+1
 
             PCMPGTB xmm2, xmm1
             xor rax, rax
@@ -130,9 +134,10 @@ thresholding:
             PSHUFB xmm5, xmm6
 
             PAND xmm5, xmm2
+            PAND xmm5, xmm0
             PADDSB xmm7, xmm5
 
-            MOVDQU xmm3, [rdi+rcx]; x+1 y
+            MOVDQU xmm3, [rdi+rdx]; x+1 y
             PCMPGTB xmm3, xmm1
             xor rax, rax
             mov rax, 10
@@ -141,6 +146,7 @@ thresholding:
             PSHUFB xmm5, xmm6
 
             PAND xmm5, xmm3
+            PAND xmm5, xmm0
             PADDSB xmm7, xmm5
 
             MOVDQU xmm4, [rdi+1]; x y+1
@@ -152,8 +158,9 @@ thresholding:
             PSHUFB xmm5, xmm6
 
             PAND xmm5, xmm4
+            PAND xmm5, xmm0
             PADDSB xmm7, xmm5
-            %endif
+            ;%endif
 
             ; save 16 pixels
             MOVDQU [rdi], xmm1
@@ -162,7 +169,7 @@ thresholding:
             add rdi, 16
             jmp .for_j_in_columns
         .exit_inner_loop:
-        sub R13, rcx
+        sub R13, rdx
         sub rdi, R13
         sub rsi, R13
         inc R12
