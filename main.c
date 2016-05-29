@@ -51,7 +51,9 @@ typedef struct {
 } Image;
 
 
+/*assembler functions*/
 void canny(unsigned char *src, unsigned char *dst, int height, int width);
+void thresholding(void * data, int height, int width, char lower, char upper);
 
 void *reduce_colors(Image *source) {
     char *data = malloc((size_t) (source->height * source->width));
@@ -84,36 +86,6 @@ void *roberts_cross(unsigned char *data, int height, int width) {
     canny(data, ret_data, height, width);
     return ret_data;
 }
-
-/*
-void thresholding(unsigned char *data, int height, int width) {
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            unsigned char sourcePixel;
-            sourcePixel = *(data + j + i * width);
-            if (sourcePixel < 20){
-                *(data + j + i * width) = 0;
-            }
-            else if (sourcePixel > 150)
-                *(data + j + i * width) = 255;
-            else {
-                unsigned char up = *(data + j + (i + 1)* width);
-                unsigned char right = *(data + j + 1 + i * width);
-                unsigned char cross = *(data + j + 1 + (i + 1) * width);
-                if (up >= sourcePixel) {
-                    *(data + j + i * width) += 30;
-                }
-                if (right >= sourcePixel) {
-                    *(data + j + i * width) += 30;
-                }
-                if (cross >= sourcePixel) {
-                    *(data + j + i * width) += 30;
-                }
-            }
-        }
-    }
-}
-*/
 
 void * blur(char * data, int height, int width)
 {
@@ -160,7 +132,7 @@ int main(int argc, char **argv) {
     void *reducedImage = reduce_colors(&img);
     reducedImage = blur(reducedImage, img.height, img.width);
     void *crossed = roberts_cross(reducedImage, img.height, img.width);
-    thresholding(crossed, img.height, img.width);
+    thresholding(crossed, img.height, img.width, 20, 40);
     dst.data = back_colors(crossed, img.height, img.width, padding);
 
 
