@@ -1,5 +1,5 @@
 bits 64
-global canny
+global roberts_cross_assembly
 global thresholding
 global blur_assembly
 global fill_with_zero
@@ -59,7 +59,7 @@ fill_with_zero:
 ;dest = rsi
 ;heigth = rdx
 ;width = rcx
-canny:
+roberts_cross_assembly:
     push RBP
     push rbx
     push R12
@@ -146,7 +146,7 @@ thresholding:
             ; first remove all values which are less than 20
             ; ###################################
             ;
-            ; prepare vector filled with BYTE 20
+            ; prepare vector filled with lower byte
             xor rax, rax
             mov rax, rcx
             MOVQ xmm2, rax
@@ -156,15 +156,15 @@ thresholding:
 
             MOVDQA xmm4, xmm1 ; save
 
-            PCMPGTB xmm4, xmm2 ; see what values of xmm1 are less than 20
-            ; values less than 20 are marked by 0 in xmm2
+            PCMPGTB xmm4, xmm2 ; see what values of xmm1 are less than lower
+            ; values less than lower are marked by 0 in xmm2
             MOVDQA xmm0, xmm4; save zero mask
 
             PAND xmm1, xmm4 ; zero out values less than 20 in xmm1
 
 
             ; set all values gt upper limit (r8) to 127 (max val)
-            ; prepare vector filled with 150
+            ; prepare vector filled with upper
             xor rax, rax
             mov rax, r8
             MOVQ xmm2, rax
@@ -176,7 +176,7 @@ thresholding:
 
             PCMPGTB xmm4, xmm2
 
-            POR xmm1, xmm4
+            POR xmm1, xmm4 ; set values greather than upper to FF
             PANDN xmm4, xmm0
             MOVDQA xmm0, xmm4
 

@@ -2,13 +2,13 @@ CFLAGS=-g -O3
 
 all: edge
 
-edge: main.o canny.o
+edge: main.o edge.o
 	cc ${CFLAGS} -o $@ $^
 
 main.o: main.c
 	cc ${CFLAGS} -g -c $^
 
-canny.o: canny.s
+edge.o: edge.s
 	nasm -f elf64 $^
 
 clear:
