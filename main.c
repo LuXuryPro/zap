@@ -63,7 +63,7 @@ void *reduce_colors(Image *source) {
             Pixel sourcePixel = *(source->data + j + i * source->padding / 3);
             data[i * source->width + j] = ((char) (
                     (float) sourcePixel.r * 0.3 + (float) sourcePixel.g * 0.59 +
-                    (float) sourcePixel.b * 0.11) )^ 0x80;
+                    (float) sourcePixel.b * 0.11) ) ^ 0x80;
         }
     }
     return data;
@@ -91,15 +91,7 @@ void *roberts_cross(unsigned char *data, int height, int width) {
 void * blur(char * data, int height, int width)
 {
     char *ret_data = malloc((size_t) (width * height));
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            int sourcePixel = *(data + j + i * width);
-            int up = *(data + j + (i + 1)* width);
-            int right = *(data + j + 1 + i * width);
-            int cross = *(data + j + 1 + (i + 1) * width);
-            *(ret_data + j + i * width) = (char)((sourcePixel + up + right + cross)/4);
-        }
-    }
+    blur_assembly(data, ret_data, height, width);
     return ret_data;
 }
 
@@ -130,6 +122,7 @@ int main(int argc, char **argv) {
     dst.height = img.height;
     dst.width = img.width;
     dst.padding = img.padding;
+
     void *reducedImage = reduce_colors(&img);
     reducedImage = blur(reducedImage, img.height, img.width);
     void *crossed = roberts_cross(reducedImage, img.height, img.width);
