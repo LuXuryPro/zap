@@ -73,6 +73,12 @@ roberts_cross_assembly:
     div R15
     mov R15, rax ; number of chunks in row
     xchg R14, rdx ; reminder in row
+    mov r9, r14
+    test r14, r14
+    jnz .not_sub_one_form_chunks
+    dec R15
+    mov r9, 16
+    .not_sub_one_form_chunks:
     xor R12, R12; i = 0
     dec rdx ; ommit last row
     .for_i_in_rows:
@@ -82,7 +88,7 @@ roberts_cross_assembly:
         xor R13, R13; j = 0
         .for_j_in_columns:
             cmp R13, R15; j < width
-            jnb .exit_inner_loop
+            jnb .reminder
 
             MOVDQU xmm1, [rdi]; current pixel
             MOVDQU xmm2, [rdi+rcx+1]; x+1 y+1
@@ -105,17 +111,77 @@ roberts_cross_assembly:
             add rdi, 16
             add rsi, 16
             jmp .for_j_in_columns
+            jmp .for_j_in_columns
+            .reminder:
+                mov R13, r9
+                dec R13
+                cmp R13, 0
+                jle .exit_inner_loop
+                xor R14, R14; i = 0
+                xor rax, rax
+                .for_i_in_reminder:
+                    cmp R14, R13, ; i < reminder
+                    jnb .exit_inner_loop
+                    MOV al, [rdi]
+                    SUB al, [rdi + rcx + 1]
+                    cmp al,0
+                    jg .not_neg
+                    neg al
+                    .not_neg:
+                    MOV bl, [rdi+rcx]
+                    sub bl, [rdi + 1]
+                    cmp bl,0
+                    jg .not_negb
+                    neg bl
+                    .not_negb:
+                    add al,bl
+                    MOV [rsi], al
+                    inc rdi
+                    inc rsi
+                    inc R14
+                    jmp .for_i_in_reminder
         .exit_inner_loop:
+        MOV al, [rsi - 1]
+        MOV [rsi], al
+        inc rdi
+        inc rsi
         inc R12
         jmp .for_i_in_rows
-.exit:
-    pop R15
-    pop R14
-    pop R13
-    pop R12
-    pop rbx
-    pop rbp
-    ret
+        .last_row:
+            xor R13, R13; j = 0
+            .last_row_for_j_in_columns:
+                cmp R13, R15; j < width
+                jnb .last_reminder
+                NEG rcx
+                MOVDQU xmm1, [rsi + rcx]; current pixel
+                NEG rcx
+                MOVDQU [rsi], xmm1; current pixel
+                add rdi, 16
+                add rsi, 16
+                inc R13
+                jmp .last_row_for_j_in_columns
+            .last_reminder:
+                    mov R13, r9
+                    xor R14, R14; i = 0
+                    .last_reminder_for_i_in_reminder:
+                        cmp R14, R13, ; i < reminder
+                        jnb .exit
+                        NEG rcx
+                        MOV al, [rsi + rcx]
+                        NEG rcx
+                        MOV [rsi], al
+                        inc rdi
+                        inc rsi
+                        inc R14
+                        jmp .last_reminder_for_i_in_reminder
+    .exit:
+        pop R15
+        pop R14
+        pop R13
+        pop R12
+        pop rbx
+        pop rbp
+        ret
 
 ;source = rdi
 ;heigth = rsi
