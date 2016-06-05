@@ -52,6 +52,7 @@ typedef struct {
 
 
 /*assembler functions*/
+void fill_with_zero(void * data, unsigned int size);
 void canny(void *src, void *dst, int height, int width);
 void thresholding(void * data, int height, int width, char lower, char upper);
 void blur_assembly(void * data, void * dst, int height, int width);
@@ -84,6 +85,7 @@ void * back_colors(unsigned char *data, int height, int width, int padding) {
 
 void *roberts_cross(unsigned char *data, int height, int width) {
     unsigned char *ret_data = malloc((size_t) (width * height));
+    fill_with_zero(ret_data, height*width);
     canny(data, ret_data, height, width);
     return ret_data;
 }
@@ -91,6 +93,7 @@ void *roberts_cross(unsigned char *data, int height, int width) {
 void * blur(char * data, int height, int width)
 {
     char *ret_data = malloc((size_t) (width * height));
+    fill_with_zero(ret_data, height*width);
     blur_assembly(data, ret_data, height, width);
     return ret_data;
 }

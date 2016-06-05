@@ -2,6 +2,7 @@ bits 64
 global canny
 global thresholding
 global blur_assembly
+global fill_with_zero
 
 section .data
 
@@ -9,6 +10,50 @@ zero_vector: times 16 db 0x00
 signed_conversion: times 16 db 0x80
 
 section .text
+
+;source = rdi
+;size = rsi
+fill_with_zero:
+    push RBP
+    push rbx
+    push R12
+    push R13
+    push R14
+    push R15
+    mov rax, rsi
+    mov R15, 16
+    mov RDX, 0
+    div R15
+    mov R12, rax ; number of chunks
+    mov R13, rdx ; reminder
+    xor R14, R14; i = 0
+    PXOR xmm1, xmm1
+    .for_i_in_chunks:
+        cmp R14, R12, ; i < numer_of_chunks
+        jnb .reminder
+        MOVDQA xmm1, [rdi]; current chunk
+        add rdi, 16
+        inc R14
+        jmp .for_i_in_chunks
+    .reminder:
+        xor R14, R14; i = 0
+        xor rax,rax
+        .for_i_in_reminder:
+            cmp R14, R13, ; i < reminder
+            jnb .exit
+            MOV al, [rdi]; current chunk
+            inc rdi
+            inc R14
+            jmp .for_i_in_reminder
+    .exit:
+        pop R15
+        pop R14
+        pop R13
+        pop R12
+        pop rbx
+        pop rbp
+        ret
+
 
 ;source = rdi
 ;dest = rsi
