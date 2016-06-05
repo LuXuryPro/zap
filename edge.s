@@ -111,7 +111,6 @@ roberts_cross_assembly:
             add rdi, 16
             add rsi, 16
             jmp .for_j_in_columns
-            jmp .for_j_in_columns
             .reminder:
                 mov R13, r9
                 dec R13
@@ -195,15 +194,41 @@ thresholding:
     push R13
     push R14
     push R15
+    mov R14, RDX
+    mov rax, rdx
+    mov R15, 16
+    mov RDX, 0
+    div R15
+    mov R15, rax ; number of chunks in row
+    xchg R14, rdx ; reminder in row
+    mov r9, r14
+    test r14, r14
+    jnz .not_sub_one_form_chunks
+    dec R15
+    mov r9, 16
+    .not_sub_one_form_chunks:
     xor R12, R12; i = 0
+    dec rsi
+
+    mov rax, rcx
+    MOVQ xmm8, rax
+    PXOR xmm3, xmm3
+    PSHUFB xmm8, xmm3 ; lower limit
+
+    mov rax, r8
+    MOVQ xmm9, rax
+    mov rax, 0
+    PXOR xmm3, xmm3
+    PSHUFB xmm9, xmm3; upper limit
+
     .for_i_in_rows:
         cmp R12, rsi; i < heigth
-        jnb .exit
+        jnb .last_row
 
         xor R13, R13; j = 0
         .for_j_in_columns:
-            cmp R13, rdx; j < width
-            jnb .exit_inner_loop
+            cmp R13, R15; j < width
+            jnb .reminder
 
             MOVDQU xmm1, [rdi]; current pixel
 
@@ -213,37 +238,25 @@ thresholding:
             ; ###################################
             ;
             ; prepare vector filled with lower byte
-            xor rax, rax
-            mov rax, rcx
-            MOVQ xmm2, rax
-            mov rax, 0
-            PXOR xmm3, xmm3
-            PSHUFB xmm2, xmm3
 
             MOVDQA xmm4, xmm1 ; save
 
-            PCMPGTB xmm4, xmm2 ; see what values of xmm1 are less than lower
-            ; values less than lower are marked by 0 in xmm2
+            PCMPGTB xmm4, xmm8 ; see what values of xmm1 are less than lower
+            ; values less than lower are marked by 0 in xmm4
             MOVDQA xmm0, xmm4; save zero mask
 
             PAND xmm1, xmm4 ; zero out values less than 20 in xmm1
 
-
             ; set all values gt upper limit (r8) to 127 (max val)
             ; prepare vector filled with upper
-            xor rax, rax
-            mov rax, r8
-            MOVQ xmm2, rax
-            mov rax, 0
-            PXOR xmm3, xmm3
-            PSHUFB xmm2, xmm3
 
             MOVDQA xmm4, xmm1 ; save
 
-            PCMPGTB xmm4, xmm2
+            PCMPGTB xmm4, xmm9
 
             POR xmm1, xmm4 ; set values greather than upper to FF
             PANDN xmm4, xmm0
+
             MOVDQA xmm0, xmm4
 
             ;%if 0
@@ -290,15 +303,62 @@ thresholding:
             ; save 16 pixels
             MOVDQU [rdi], xmm1
 
-            add R13, 16 ; move to next 16 pixels
+            add R13, 1; move to next 16 pixels
             add rdi, 16
             jmp .for_j_in_columns
+            .reminder:
+                ;lower = rcx
+                ;upper = r8
+                mov R13, r9
+                xor R14, R14; i = 0
+                mov rbx, r8
+                .for_i_in_reminder:
+                    cmp R14, R13, ; i < reminder
+                    jnb .exit_inner_loop
+                    MOV al, [rdi]
+                    cmp cl,al
+                    jl .no_zeroing
+                    mov al, 0x0
+                    jmp .endt
+                    .no_zeroing:
+                    cmp bl,al
+                    jg .no_max
+                    mov al,0xFF
+                    .no_max:
+                    .endt:
+                    MOV [rdi], al
+                    inc rdi
+                    inc R14
+                    jmp .for_i_in_reminder
         .exit_inner_loop:
-        sub R13, rdx
-        sub rdi, R13
-        sub rsi, R13
         inc R12
         jmp .for_i_in_rows
+        .last_row:
+            xor R13, R13; j = 0
+            .last_row_for_j_in_columns:
+                cmp R13, R15; j < width
+                jnb .last_reminder
+                NEG rdx
+                MOVDQU xmm1, [rdi+ rdx]; current pixel
+                NEG rdx
+                MOVDQU [rdi], xmm1; current pixel
+                add rdi, 16
+                inc R13
+                jmp .last_row_for_j_in_columns
+            .last_reminder:
+                    mov R13, r9
+                    xor R14, R14; i = 0
+                    .last_reminder_for_i_in_reminder:
+                        cmp R14, R13, ; i < reminder
+                        jnb .exit
+                        NEG rdx
+                        MOV al, [rdi+ rdx]
+                        NEG rdx
+                        MOV [rdi], al
+                        inc rdi
+                        inc rsi
+                        inc R14
+                        jmp .last_reminder_for_i_in_reminder
 .exit:
     pop R15
     pop R14
