@@ -327,11 +327,30 @@ blur_assembly:
             .reminder:
                 mov R13, r9
                 xor R14, R14; i = 0
-                xor rax, rax
                 .for_i_in_reminder:
                     cmp R14, R13, ; i < reminder
                     jnb .exit_inner_loop
+                    xor rax, rax
                     MOV al, [rdi]
+                    xor al, 0x80
+                    SHR al,2
+
+                    MOV bl, [rdi + rcx+1]
+                    xor bl, 0x80
+                    shr bl, 2
+                    add al, bl
+
+                    MOV bl, [rdi + rcx]
+                    xor bl, 0x80
+                    shr bl, 2
+                    add al, bl
+
+                    MOV bl, [rdi + 1]
+                    xor bl, 0x80
+                    shr bl, 2
+                    add al, bl
+
+                    xor al, 0x80
                     MOV [rsi], al
                     inc rdi
                     inc rsi
