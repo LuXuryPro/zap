@@ -52,8 +52,9 @@ typedef struct {
 
 
 /*assembler functions*/
-void canny(unsigned char *src, unsigned char *dst, int height, int width);
+void canny(void *src, void *dst, int height, int width);
 void thresholding(void * data, int height, int width, char lower, char upper);
+void blur_assembly(void * data, void * dst, int height, int width);
 
 void *reduce_colors(Image *source) {
     char *data = malloc((size_t) (source->height * source->width));
