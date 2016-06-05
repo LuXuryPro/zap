@@ -392,6 +392,9 @@ blur_assembly:
             jmp .for_j_in_columns
             .reminder:
                 mov R13, r9
+                dec R13
+                cmp R13,0
+                jle .exit_inner_loop
                 xor R14, R14; i = 0
                 .for_i_in_reminder:
                     cmp R14, R13, ; i < reminder
@@ -423,6 +426,10 @@ blur_assembly:
                     inc R14
                     jmp .for_i_in_reminder
         .exit_inner_loop:
+        MOV al, [rsi - 1]
+        MOV [rsi], al
+        inc rdi
+        inc rsi
         inc R12
         jmp .for_i_in_rows
     .last_row:
@@ -430,7 +437,9 @@ blur_assembly:
         .last_row_for_j_in_columns:
             cmp R13, R15; j < width
             jnb .last_reminder
-            MOVDQU xmm1, [rdi]; current pixel
+            NEG rcx
+            MOVDQU xmm1, [rsi + rcx]; current pixel
+            NEG rcx
             MOVDQU [rsi], xmm1; current pixel
             add rdi, 16
             add rsi, 16
@@ -442,7 +451,9 @@ blur_assembly:
                 .last_reminder_for_i_in_reminder:
                     cmp R14, R13, ; i < reminder
                     jnb .exit
-                    MOV al, [rdi]
+                    NEG rcx
+                    MOV al, [rsi + rcx]
+                    NEG rcx
                     MOV [rsi], al
                     inc rdi
                     inc rsi
