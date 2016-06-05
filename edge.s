@@ -31,7 +31,7 @@ fill_with_zero:
     .for_i_in_chunks:
         cmp R14, R12, ; i < numer_of_chunks
         jnb .reminder
-        MOVDQA xmm1, [rdi]; current chunk
+        MOVDQA [rdi], xmm1; current chunk
         add rdi, 16
         inc R14
         jmp .for_i_in_chunks
@@ -41,7 +41,7 @@ fill_with_zero:
         .for_i_in_reminder:
             cmp R14, R13, ; i < reminder
             jnb .exit
-            MOV al, [rdi]; current chunk
+            MOV [rdi], al; current chunk
             inc rdi
             inc R14
             jmp .for_i_in_reminder
