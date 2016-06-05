@@ -53,7 +53,7 @@ typedef struct {
 
 /*assembler functions*/
 void fill_with_zero(void * data, unsigned int size);
-void canny(void *src, void *dst, int height, int width);
+void roberts_cross_assembly(void *src, void *dst, int height, int width);
 void thresholding(void * data, int height, int width, char lower, char upper);
 void blur_assembly(void * data, void * dst, int height, int width);
 
@@ -63,8 +63,8 @@ void *reduce_colors(Image *source) {
         for (int j = 0; j < source->padding / 3; j++) {
             Pixel sourcePixel = *(source->data + j + i * source->padding / 3);
             data[i * source->width + j] = ((char) (
-                    (float) sourcePixel.r * 0.3 + (float) sourcePixel.g * 0.59 +
-                    (float) sourcePixel.b * 0.11) ) ^ 0x80;
+                        (float) sourcePixel.r * 0.3 + (float) sourcePixel.g * 0.59 +
+                        (float) sourcePixel.b * 0.11) ) ^ 0x80;
         }
     }
     return data;
@@ -86,7 +86,7 @@ void * back_colors(unsigned char *data, int height, int width, int padding) {
 void *roberts_cross(unsigned char *data, int height, int width) {
     unsigned char *ret_data = malloc((size_t) (width * height));
     fill_with_zero(ret_data, height*width);
-    canny(data, ret_data, height, width);
+    roberts_cross_assembly(data, ret_data, height, width);
     return ret_data;
 }
 
@@ -98,9 +98,17 @@ void * blur(char * data, int height, int width)
     return ret_data;
 }
 
+void usage(char * name) {
+    printf("Usage:\n%s input.bmp output.bmp lower upper\n", name);
+    puts("Lower threshold must be less than upper threshold");
+    exit(-1);
+}
+
+
 int main(int argc, char **argv) {
-    if (argc != 3)
-        return -1;
+    if (argc < 5) {
+        usage(argv[0]);
+    }
     BITMAPFILEHEADER bfh = {0};
     BITMAPINFOHEADER bih = {0};
     FILE *f = fopen(argv[1], "rb");
@@ -128,9 +136,14 @@ int main(int argc, char **argv) {
 
     void *reducedImage = reduce_colors(&img);
     reducedImage = blur(reducedImage, img.height, img.width);
-    void *crossed = roberts_cross(reducedImage, img.height, img.width);
-    thresholding(crossed, img.height, img.width, 20, 40);
-    dst.data = back_colors(crossed, img.height, img.width, padding);
+    reducedImage = roberts_cross(reducedImage, img.height, img.width);
+    int lower =  atoi(argv[3]);
+    int upper =  atoi(argv[4]);
+    if (lower >= upper) {
+        usage(argv[0]);
+    }
+    thresholding(reducedImage, img.height, img.width, lower, upper);
+    dst.data = back_colors(reducedImage, img.height, img.width, padding);
 
 
     FILE *z = fopen(argv[2], "w");
