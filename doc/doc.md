@@ -1,5 +1,5 @@
 # ZAP Projekt
-## Wykrywanie krawędzi w obrazach z użyciem jednostki wektorowej SSE
+## Wykrywanie krawędzi w obrazach z użyciem jednostki wektorowej Intel SSE
 Wykonał:
 
 - Radosław Załuska
@@ -7,11 +7,11 @@ Wykonał:
 
 ### Wstęp
 Zadanie polegało na zrealizowaniu algorytmu wykrywania krawędzi w obrazach z
-dodatkowym progowaniem. Całość miała być zaimplementowania na poziome asemblera
-z użyciem jednostki wektorowej SSE.
+dodatkowym progowaniem wartości siły krawędzi. Całość miała być
+zaimplementowania na poziome asemblera z użyciem jednostki wektorowej SSE.
 
 Wykrywanie krawędzi w obrazach polega na obliczeniu różnic między pixelami w
-bliskim sądiedztwie. Dzięki temu uzyskujem watrość gradientu koloru dla
+bliskim sądiedztwie. Dzięki temu uzyskujemy wartość gradientu koloru dla
 poszczególnych elementów obrazu. Bardzo często samo policznie gradientu nie
 daje dobrych rezultatów ponieważ obraz może być zaszumiony lub posiadać
 niewyraźne krawędzie. Aby temu zaradzić stosuje się róźne techniki poprawy
@@ -35,20 +35,20 @@ Kolejność wykonywania funkcji jest następująca:
    kolorowego na odcienie szarości. Przetwarzanie przebiego po każdym pixelu
    według następującej formuły:
 
-    $bwPixel = sourcePixel.r * 0.3 + sourcePixel.g * 0.59 + sourcePixel.b * 0x11$
+    $bwPixel = sourcePixel.red * 0.3 + sourcePixel.green * 0.59 + sourcePixel.blue * 0x11$
 
     Dodaktowo funkcja dokonuje zamiany przydziłu liczb od 0 do 255 na przedział
-    od -127 do 127 co będzie wykorzystywane w dalszej częci algorytmu do
-    odejmowania liczb ze znakiem. Konwersja jest dokonywana poprzez zastosowanie
+    od -127 do 127 co będzie wykorzystywane w dalszej części algorytmu do
+    odejmowania i porównywania liczb ze znakiem. Konwersja jest dokonywana poprzez zastosowanie
     wzoru:
     $$ ByteOut = ByteIn \mathbin{\oplus} \mathtt{0x80h}$$
 
     Po zastosowaniu każdym trzem wartościom RGB pixela odpowiada jedna wartość.
     Funkcja redukuje ilość przetwarzanych pixeli trzykrotnie i przyspiesza
-    obliczenia.
+    obliczenia. Konwersja z RGB na BW nie zmienia sposobu działania algorytmu.
 
 2. blur - funkcja realizowana w asemblerze przy użyciu jednostki wektorowej. Jej
-   zadaniem jest dokonanie delikatnego rozmazania obrazka. Wykorzystuje do tego
+   zadaniem jest dokonanie delikatnego rozmycia obrazka. Wykorzystuje do tego
    prosty 4 elementowy kernel, gdzie element aktywny jest w lewym górym rogu.
     \begin{equation}
     \frac{1}{4} \begin{bmatrix}
@@ -59,7 +59,7 @@ Kolejność wykonywania funkcji jest następująca:
 
 
 3. roberts\_cross\_assembly - właściwa funkcja dokonująca wykrywania krawądzi.
-   Korzysta z fultru macierzowego krzyż robertsa który składa się z dwóch
+   Korzysta z filtru macierzowego krzyż robertsa który składa się z dwóch
    kerneli. Element bierzący jest w lewym górym rogu macierzy.
    $$
     K_1 =
@@ -76,7 +76,7 @@ Kolejność wykonywania funkcji jest następująca:
 
      Dokładna wartość wypadkowa krawędzi jest liczona ze wzoru:
      $$
-     Output(x,y) =
+     output(x,y) =
      \sqrt{(input(x,y) - input(x+1,y+1))^2 + (input(x+1,y) - input(x,y+1))^2}
      $$
 
@@ -91,7 +91,7 @@ Kolejność wykonywania funkcji jest następująca:
 
 4. thresholding - funkcji asemblerowa której zadaniem jest odrzucenie słabych
    krawędzi z obrazu i wzmocnienie tych które są wyraźnie. Wykorzystywana jest w
-   niej funkcja prównywania liczb w jednostce wektorowej która jako wynik zwraca
+   niej funkcja porównywania liczb w jednostce wektorowej która jako wynik zwraca
    maski bitowe wykorzystywane do nanoszenia poprawki na progowany obraz. W
    uproszczeniu działanianie funkcji jest następujące:
 
@@ -143,8 +143,8 @@ Kolejność wykonywania funkcji jest następująca:
 
 ### Sposób uruchomienia
 Program był tesowany na procesorze Intel(R) Celeron(R) CPU 1000M wyposarzonym w
-jednostkę wekorową SSS 4.2. Nie były wykorzystywane funkcje specyficzne dla SSE
-4 jednak w celu zagawrantowania działania programu zalecane jest uruchomiene na
+jednostkę wekorową SSE 4.2. Nie były wykorzystywane funkcje specyficzne dla SSE
+4 jednak w celu zagwarantowania działania programu zalecane jest uruchomiene na
 procesorach wyposarzonych przynajmniej w SSE4.
 
 #### Budowanie i uruchamianie
