@@ -74,7 +74,7 @@ void * back_colors(unsigned char *data, int height, int width, int padding) {
     char *ret_data = malloc((size_t) (height * padding));
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            unsigned char val = *(data + j + i * width);
+            unsigned char val = *(data + j + i * width) ^ 0x80;
             *(ret_data + j * 3 + i * padding) = val;
             *(ret_data + j * 3 + i * padding + 1) = val;
             *(ret_data + j * 3 + i * padding + 2) = val;

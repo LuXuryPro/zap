@@ -217,9 +217,18 @@ thresholding:
 
     mov rax, r8
     MOVQ xmm9, rax
-    mov rax, 0
     PXOR xmm3, xmm3
     PSHUFB xmm9, xmm3; upper limit
+
+    mov rax, 0x7f ; max val 127
+    MOVQ xmm10, rax
+    PXOR xmm3, xmm3
+    PSHUFB xmm10, xmm3
+
+    mov rax, 0x81 ; min val -127
+    MOVQ xmm11, rax
+    PXOR xmm3, xmm3
+    PSHUFB xmm11, xmm3
 
     .for_i_in_rows:
         cmp R12, rsi; i < heigth
@@ -243,6 +252,8 @@ thresholding:
             MOVDQA xmm0, xmm4; save zero mask
 
             PAND xmm1, xmm4 ; zero out values less than 20 in xmm1
+            PANDN xmm4, xmm11; not xmm4 and xmm11
+            POR xmm1, xmm4
 
             ; set all values gt upper limit (r8) to 127 (max val)
             ; prepare vector filled with upper
@@ -250,10 +261,15 @@ thresholding:
             MOVDQA xmm4, xmm1 ; save
 
             PCMPGTB xmm4, xmm9
+            MOVDQA xmm12, xmm4
+            MOVDQA xmm13, xmm10
+            PAND xmm13, xmm4
+            PANDN xmm4, xmm1
+            POR xmm1, xmm13
 
-           POR xmm1, xmm4 ; set values greather than upper to FF
             ; set zeros in places where we set value to max or we set it to min
             ; to discard this values form further calculations
+            MOVDQA xmm4, xmm12
             PANDN xmm4, xmm0 ; not xmm4 and xmm0
             MOVDQA xmm0, xmm4
 
@@ -316,12 +332,12 @@ thresholding:
                     MOV al, [rdi]
                     cmp cl,al
                     jl .no_zeroing
-                    mov al, 0x0
+                    mov al, 0x81
                     jmp .endt
                     .no_zeroing:
                     cmp bl,al
                     jg .no_max
-                    mov al,0xFF
+                    mov al,0x7F
                     .no_max:
                     .endt:
                     MOV [rdi], al
