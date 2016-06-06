@@ -234,11 +234,8 @@ thresholding:
 
 
             ; ###################################
-            ; first remove all values which are less than 20
+            ; first remove all values which are less than lower limit
             ; ###################################
-            ;
-            ; prepare vector filled with lower byte
-
             MOVDQA xmm4, xmm1 ; save
 
             PCMPGTB xmm4, xmm8 ; see what values of xmm1 are less than lower
@@ -254,9 +251,10 @@ thresholding:
 
             PCMPGTB xmm4, xmm9
 
-            POR xmm1, xmm4 ; set values greather than upper to FF
-            PANDN xmm4, xmm0
-
+           POR xmm1, xmm4 ; set values greather than upper to FF
+            ; set zeros in places where we set value to max or we set it to min
+            ; to discard this values form further calculations
+            PANDN xmm4, xmm0 ; not xmm4 and xmm0
             MOVDQA xmm0, xmm4
 
             ;%if 0
