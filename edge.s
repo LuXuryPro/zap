@@ -243,15 +243,16 @@ thresholding:
             ; ###################################
             ; first remove all values which are less than lower limit
             ; ###################################
-            MOVDQA xmm4, xmm1 ; save
 
-            PCMPGTB xmm4, xmm8 ; see what values of xmm1 are less than lower
-            ; values less than lower are marked by 0 in xmm4
-            MOVDQA xmm0, xmm4; save zero mask
+            MOVDQA xmm14, xmm8
+            PCMPGTB xmm8, xmm1 ; see what values of xmm1 are less than lower
+            MOVDQA xmm15, xmm8 ; 1 - when less than
+            MOVDQA xmm0, xmm8
 
-            PAND xmm1, xmm4 ; zero out values less than 20 in xmm1
-            PANDN xmm4, xmm11; not xmm4 and xmm11
-            POR xmm1, xmm4
+            PBLENDVB xmm1, xmm11
+
+            MOVDQA xmm8, xmm14
+
 
             ; set all values gt upper limit (r8) to 127 (max val)
             ; prepare vector filled with upper
@@ -261,6 +262,7 @@ thresholding:
             PCMPGTB xmm4, xmm9
             MOVDQA xmm12, xmm4
             MOVDQA xmm13, xmm10
+
             PAND xmm13, xmm4
             PANDN xmm4, xmm1
             POR xmm1, xmm13
