@@ -228,6 +228,11 @@ thresholding:
     PXOR xmm3, xmm3
     PSHUFB xmm11, xmm3
 
+    mov rax, 0xFF
+    MOVQ xmm12, rax
+    PXOR xmm3, xmm3
+    PSHUFB xmm12, xmm3 ; lower limit
+
     .for_i_in_rows:
         cmp R12, rsi; i < heigth
         jnb .last_row
@@ -259,19 +264,14 @@ thresholding:
 
             MOVDQA xmm4, xmm1 ; save
 
-            PCMPGTB xmm4, xmm9
-            MOVDQA xmm12, xmm4
-            MOVDQA xmm13, xmm10
-
-            PAND xmm13, xmm4
-            PANDN xmm4, xmm1
-            POR xmm1, xmm13
+            PCMPGTB xmm4, xmm9 ; 1 - if bigger than upper limit
+            MOVDQA xmm0, xmm4
+            PBLENDVB xmm1, xmm10
 
             ; set zeros in places where we set value to max or we set it to min
             ; to discard this values form further calculations
-            MOVDQA xmm4, xmm12
-            PANDN xmm4, xmm0 ; not xmm4 and xmm0
-            MOVDQA xmm0, xmm4
+            POR xmm15, xmm4
+            PXOR xmm15, xmm12
 
             ;%if 0
             MOVDQU xmm7, xmm1 ;save
@@ -286,7 +286,7 @@ thresholding:
             PSHUFB xmm5, xmm6
 
             PAND xmm5, xmm2
-            PAND xmm5, xmm0
+            PAND xmm5, xmm15
             PADDSB xmm7, xmm5
 
             MOVDQU xmm3, [rdi+rdx]; x+1 y
@@ -298,7 +298,7 @@ thresholding:
             PSHUFB xmm5, xmm6
 
             PAND xmm5, xmm3
-            PAND xmm5, xmm0
+            PAND xmm5, xmm15
             PADDSB xmm7, xmm5
 
             MOVDQU xmm4, [rdi+1]; x y+1
@@ -310,7 +310,7 @@ thresholding:
             PSHUFB xmm5, xmm6
 
             PAND xmm5, xmm4
-            PAND xmm5, xmm0
+            PAND xmm5, xmm15
             PADDSB xmm7, xmm5
             ;%endif
 
