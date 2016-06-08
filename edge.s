@@ -223,7 +223,7 @@ thresholding:
     PXOR xmm3, xmm3
     PSHUFB xmm10, xmm3
 
-    mov rax, 0x81 ; min val -127
+    mov rax, 0x80 ; min val -128
     MOVQ xmm11, rax
     PXOR xmm3, xmm3
     PSHUFB xmm11, xmm3
@@ -330,7 +330,7 @@ thresholding:
                     MOV al, [rdi]
                     cmp cl,al
                     jl .no_zeroing
-                    mov al, 0x81
+                    mov al, 0x80
                     jmp .endt
                     .no_zeroing:
                     cmp bl,al
@@ -393,8 +393,6 @@ blur_assembly:
     push R13
     push R14
     push R15
-
-
 
     mov R14, rcx
     mov R13, 0xF
