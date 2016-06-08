@@ -20,12 +20,11 @@ fill_with_zero:
     push R13
     push R14
     push R15
-    mov rax, rsi
-    mov R15, 16
-    mov RDX, 0
-    div R15
-    mov R12, rax ; number of chunks
-    mov R13, rdx ; reminder
+    mov R13, rsi
+    mov R14, 0xF
+    and R13, R14 ; reminder
+    mov R12, rsi
+    SAR R12, 4
     xor R14, R14; i = 0
     PXOR xmm1, xmm1
     .for_i_in_chunks:
@@ -66,13 +65,11 @@ roberts_cross_assembly:
     push R13
     push R14
     push R15
-    mov rax, rcx
-    mov R15, 16
-    mov R14, RDX
-    mov RDX, 0
-    div R15
-    mov R15, rax ; number of chunks in row
-    xchg R14, rdx ; reminder in row
+    mov R14, rcx
+    mov R13, 0xF
+    and R14, R13 ; reminder
+    mov R15, rcx
+    SAR R15, 4
     mov r9, r14
     test r14, r14
     jnz .not_sub_one_form_chunks
@@ -194,13 +191,14 @@ thresholding:
     push R13
     push R14
     push R15
-    mov R14, RDX
-    mov rax, rdx
-    mov R15, 16
-    mov RDX, 0
-    div R15
-    mov R15, rax ; number of chunks in row
-    xchg R14, rdx ; reminder in row
+
+
+    mov R14, rdx
+    mov R13, 0xF
+    and R14, R13 ; reminder
+    mov R15, rdx
+    SAR R15, 4
+
     mov r9, r14
     test r14, r14
     jnz .not_sub_one_form_chunks
@@ -396,13 +394,14 @@ blur_assembly:
     push R14
     push R15
 
-    mov rax, rcx
-    mov R15, 16
-    mov R14, RDX
-    mov RDX, 0
-    div R15
-    mov R15, rax ; number of chunks in row
-    xchg R14, rdx ; reminder in row
+
+
+    mov R14, rcx
+    mov R13, 0xF
+    and R14, R13 ; reminder
+    mov R15, rcx
+    SAR R15, 4
+
     mov r9, r14
     test r14, r14
     jnz .not_sub_one_form_chunks
