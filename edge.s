@@ -192,6 +192,8 @@ thresholding:
     push R14
     push R15
 
+    AND rcx, 0xFF
+    AND r8, 0xFF
 
     mov R14, rdx
     mov R13, 0xF
